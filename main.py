@@ -60,10 +60,11 @@ def pick_and_place():
     
     ball_position = [0.7, 0.7, 0.05]
     ball_id = env.load_ball(ball_position)
-    env.pick_ball(ball_position)
+    env.hug_ball(ball_position)
     env.grasp_ball()
     env.lift_ball()
-    
+    robot.open_gripper()
+    # env.throw_ball([1, 0, 0.5])
     keep_it_running(robot,env)
 
 if __name__ == '__main__':

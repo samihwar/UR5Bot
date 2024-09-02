@@ -175,30 +175,21 @@ class ClutteredPushGrasp:
             p.stepSimulation()
             time.sleep(1 / 240.)  # Match the simulation time step
 
-    def pick_ball(self, ball_position):
+    def hug_ball(self, ball_position):
         pitch=math.pi / 2   # look down
         ball_x, ball_y, ball_z = ball_position
     
         action = [ball_x, ball_y, ball_z + 0.4, 0, pitch, 0]  # Move slightly above the ball
         self.move_to_position(action)
-        time.sleep(4)
+        time.sleep(2)
         ee_pos = self.robot.get_joint_obs()['ee_pos']
         print(f"end-effector actual position: {ee_pos}")
     
         action = [ball_x, ball_y, ball_z + 0.1, 0, pitch, 0]  # Adjust the z position to be closer to the ball
         self.move_to_position(action)
-        time.sleep(4)
+        time.sleep(1)
         ee_pos = self.robot.get_joint_obs()['ee_pos']
         print(f"end-effector actual position: {ee_pos}")
-    
-        # # Step 3: Grasp the ball
-        # self.grasp_ball()
-    
-        # # Step 4: Lift the ball to avoid collision with the ground
-        # lift_height = 0.1  # Adjust this as needed
-        # current_pos = self.robot.get_joint_obs()['ee_pos']
-        # action = [current_pos[0], current_pos[1], current_pos[2] + lift_height, 0, 0, 0]  # Lift the ball by lift_height units
-        # self.move_to_position(action)
 
     def grasp_ball(self):
         self.robot.close_gripper()
@@ -211,6 +202,23 @@ class ClutteredPushGrasp:
         pitch=math.pi / 2
         action = [current_pos[0], current_pos[1], current_pos[2] + lift_height, 0, pitch, 0]  # Lift the ball by lift_height units
         self.move_to_position(action)
+        time.sleep(1)
+        ee_pos = self.robot.get_joint_obs()['ee_pos']
+        print(f"end-effector actual position: {ee_pos}")
+
+    def throw_ball(self, direction, speed=1.0, release_time=0.5):
+        current_pos = self.robot.get_joint_obs()['ee_pos']
+        target_pos = [
+            current_pos[0] + direction[0] * speed,
+            current_pos[1] + direction[1] * speed,
+            current_pos[2] + direction[2] * speed,0,0,0
+        ]
+        self.move_to_position(target_pos)
+        time.sleep(release_time)
+        self.robot.open_gripper()
+        for _ in range(60):
+            p.stepSimulation()
+            time.sleep(1 / 240.)
 
 
 
