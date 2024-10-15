@@ -140,8 +140,8 @@ class ClutteredPushGrasp:
     # i wanna try to add a ball and make UR5 pick it up
 
     def load_ball(self, position): # creating the ball itself at a position
-        visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[1, 0, 0, 1])
-        collision_shape_id = p.createCollisionShape(shapeType=p.GEOM_SPHERE, radius=0.05)
+        visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.04, rgbaColor=[1, 0, 0, 1])#0.05
+        collision_shape_id = p.createCollisionShape(shapeType=p.GEOM_SPHERE, radius=0.04)#0.05
         ball_id = p.createMultiBody(baseMass=1,baseCollisionShapeIndex=collision_shape_id,baseVisualShapeIndex=visual_shape_id,basePosition=position)
         return ball_id
     
@@ -185,7 +185,7 @@ class ClutteredPushGrasp:
         ee_pos = self.robot.get_joint_obs()['ee_pos']
         print(f"end-effector actual position: {ee_pos}")
     
-        action = [ball_x, ball_y, ball_z + 0.1, 0, pitch, 0]  # Adjust the z position to be closer to the ball
+        action = [ball_x, ball_y, ball_z + 0.11, 0, pitch, 0]  # Adjust the z position to be closer to the ball 
         self.move_to_position(action)
         time.sleep(1)
         ee_pos = self.robot.get_joint_obs()['ee_pos']
@@ -193,6 +193,12 @@ class ClutteredPushGrasp:
 
     def grasp_ball(self):
         self.robot.close_gripper()
+        for _ in range(60):  # Wait for the gripper to close
+            p.stepSimulation()
+            time.sleep(1 / 240.)
+
+    def let_go_ball(self):
+        self.robot.open_gripper()
         for _ in range(60):  # Wait for the gripper to close
             p.stepSimulation()
             time.sleep(1 / 240.)
@@ -215,10 +221,7 @@ class ClutteredPushGrasp:
         ]
         self.move_to_position(target_pos)
         time.sleep(release_time)
-        self.robot.open_gripper()
-        for _ in range(60):
-            p.stepSimulation()
-            time.sleep(1 / 240.)
+        self.let_go_ball()
 
 
 
