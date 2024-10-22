@@ -1,4 +1,4 @@
-# Gym-Styled UR5 arm with Robotiq-85 / 140 gripper in PyBullet simulator
+# Gym-Styled UR5 arm with Robotiq-85
 
 This repo is under active development. Issues / PRs are welcomed.
 
