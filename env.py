@@ -206,39 +206,26 @@ class ClutteredPushGrasp:
     #     time.sleep(release_time)
     #     self.let_go_ball()
 
-    def move_joint_4(self, target_angle):
-
-        # Get the current joint observation
+    def move_joint_2(self, target_angle):
+        # get joint positions
         joint_obs = self.robot.get_joint_obs()
-
-        # Extract the current joint positions
         current_joint_positions = joint_obs['positions']
-
-        # Create a copy of the current joint positions
         modified_joint_positions = current_joint_positions.copy()
 
-        # Update only Joint 4 (index 3 as per the joint IDs list)
-        modified_joint_positions[4] = target_angle
+        modified_joint_positions[2] = target_angle
 
-        # Move the robot with the modified joint positions
         self.robot.set_joint_positions(modified_joint_positions)
 
 
     def throw_ball(self, direction, speed=1.0, release_time=0.5):
-        # Move to a predefined start position before throwing
         start_position = [0.3, 0.5, 0.3, 0, 0, 0]
         self.move_to_position(start_position)
     
-        # Calculate the new angle for Joint 4 based on the speed and direction of the throw
-        # new_joint_4_angle = self.calculate_throw_angle(direction, speed)
-        new_joint_4_angle = 90
-        # Move only Joint 4
-        self.move_joint_4(new_joint_4_angle)
+        # Move only Joint 2
+        new_joint_2_angle = -0.1
+        self.move_joint_2(new_joint_2_angle)
     
-        # Wait for the release time before letting go of the ball
         time.sleep(release_time)
-    
-        # Release the ball
         self.let_go_ball()
 
 
