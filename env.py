@@ -224,9 +224,23 @@ class ClutteredPushGrasp:
         # Move only Joint 2
         new_joint_2_angle = -0.1
         self.move_joint_2(new_joint_2_angle)
+        
+        # Monitor the end-effector�s position
+        current_pos = self.robot.get_joint_obs()['ee_pos']
     
-        time.sleep(release_time)
-        self.let_go_ball()
+        # Define the point where you'd like to release the ball (example: when z-height reaches 0.5)
+        target_z_height = 0.5
+    
+        while current_pos[2] < target_z_height:  # Z-axis condition
+            current_pos = self.robot.get_joint_obs()['ee_pos']
+            print(f"Current EE Position: {current_pos}")
+            p.stepSimulation()
+            time.sleep(1 / 240.)
+    
+        self.let_go_ball()  # Release the ball when the condition is met
+
+        # time.sleep(release_time)
+        # self.let_go_ball()
 
 
     # def throw_ball(self, direction, speed=1.0, release_time=0.5):
