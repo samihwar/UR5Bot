@@ -48,7 +48,7 @@ def user_control_demo():
         obs, reward, done, info = env.step(env.read_debug_parameter(), 'end')
         # print(obs, reward, done, info)
 
-def pick_and_place():
+def pick_and_lift():
     ycb_models = YCBModels(os.path.join('./data/ycb', '**', 'textured-decmp.obj'))
     camera = Camera((0.2, 0.2, 0.1),
                     (0, 0, 0),
@@ -67,6 +67,33 @@ def pick_and_place():
 
     keep_it_running(robot,env)
 
+
+def throw_it():
+    ycb_models = YCBModels(os.path.join('./data/ycb', '**', 'textured-decmp.obj'))
+    camera = Camera((0.2, 0.2, 0.1),
+                    (0, 0, 0),
+                    (0, 0, 1),
+                    0.1, 2, (640, 480), 60)
+    robot = UR5Robotiq85((0, 0.5, 0), (0, 0, 0))
+    env = ClutteredPushGrasp(robot, ycb_models, camera=camera, vis=True)
+    env.reset()
+
+    pitch = math.pi / 2 
+    action = [0.1, 0.6, 0.3, 0, pitch, 0]  # x, y, z 
+    env.move_to_position(action)
+    time.sleep(2)
+
+    ee_pos = robot.get_joint_obs()['ee_pos']
+    ball_position = [ee_pos[0], ee_pos[1], ee_pos[2]-0.08]
+    ball_id = env.load_ball(ball_position)
+    
+    env.grasp_ball()
+    env.lift_ball()
+    # here we have ready grasped ball
+
+    keep_it_running(robot, env)
+
 if __name__ == '__main__':
     # user_control_demo()
-    pick_and_place()
+    # pick_and_lift()
+    throw_it()
