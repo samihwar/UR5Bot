@@ -192,6 +192,17 @@ class UR5Robotiq85(RobotBase):
                                 'right_inner_finger_joint': -1}
         self.__setup_mimic_joints__(mimic_parent_name, mimic_children_names)
 
+    def set_joint_positions(self, joint_angles):
+        """
+        Set the positions of specific joints.
+
+        Parameters:
+        joint_angles (list): A list of joint angles corresponding to controllable joints.
+        """
+        for joint_id, angle in zip(self.arm_controllable_joints, joint_angles):
+            p.setJointMotorControl2(self.id, joint_id, p.POSITION_CONTROL, targetPosition=angle,
+                                    force=self.joints[joint_id].maxForce, maxVelocity=self.joints[joint_id].maxVelocity)
+
     def __setup_mimic_joints__(self, mimic_parent_name, mimic_children_names):
         self.mimic_parent_id = [joint.id for joint in self.joints if joint.name == mimic_parent_name][0]
         self.mimic_child_multiplier = {joint.id: mimic_children_names[joint.name] for joint in self.joints if joint.name in mimic_children_names}
