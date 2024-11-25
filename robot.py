@@ -61,11 +61,12 @@ class RobotBase(object):
             jointLowerLimit = info[8]
             jointUpperLimit = info[9]
             jointMaxForce = info[10]
-            jointMaxVelocity = info[11]
+            jointMaxVelocity = info[11] #change speed?
             controllable = (jointType != p.JOINT_FIXED)
             if controllable:
                 self.controllable_joints.append(jointID)
-                p.setJointMotorControl2(self.id, jointID, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
+                # p.setJointMotorControl2(self.id, jointID, p.VELOCITY_CONTROL, targetVelocity=0, force=0)
+                p.setJointMotorControl2(self.id, jointID, p.TORQUE_CONTROL, force=0)
             info = jointInfo(jointID,jointName,jointType,jointDamping,jointFriction,jointLowerLimit,
                             jointUpperLimit,jointMaxForce,jointMaxVelocity,controllable)
             self.joints.append(info)
@@ -116,13 +117,15 @@ class RobotBase(object):
             joint_poses = p.calculateInverseKinematics(self.id, self.eef_id, pos, orn,
                                                        self.arm_lower_limits, self.arm_upper_limits, self.arm_joint_ranges, self.arm_rest_poses,
                                                        maxNumIterations=20)
-        elif control_method == 'joint':
+        elif control_method == 'joint': 
             assert len(action) == self.arm_num_dofs
             joint_poses = action
         # arm
         for i, joint_id in enumerate(self.arm_controllable_joints):
             p.setJointMotorControl2(self.id, joint_id, p.POSITION_CONTROL, joint_poses[i],
                                     force=self.joints[joint_id].maxForce, maxVelocity=self.joints[joint_id].maxVelocity)
+            # p.setJointMotorControl2(self.id, joint_id, p.TORQUE_CONTROL, joint_poses[i],
+            #                         force=self.joints[joint_id].maxForce, maxVelocity=self.joints[joint_id].maxVelocity)
 
     def move_gripper(self, open_length):
         raise NotImplementedError
@@ -136,6 +139,34 @@ class RobotBase(object):
             velocities.append(vel)
         ee_pos = p.getLinkState(self.id, self.eef_id)[0]
         return dict(positions=positions, velocities=velocities, ee_pos=ee_pos)
+
+    def move_ee_with_torque(self, action, control_method='end'):
+        assert control_method in ('joint', 'end')
+        if control_method == 'end':
+            x, y, z, roll, pitch, yaw = action
+            pos = (x, y, z)
+            orn = p.getQuaternionFromEuler((roll, pitch, yaw))
+            joint_poses = p.calculateInverseKinematics(self.id, self.eef_id, pos, orn,
+                                                       self.arm_lower_limits, self.arm_upper_limits, self.arm_joint_ranges, self.arm_rest_poses,
+                                                       maxNumIterations=20)
+            torques = self.calculate_joint_torques(joint_poses)
+            self.set_joint_torques(torques)
+        elif control_method == 'joint':
+            # Use the provided torques directly
+            self.set_joint_torques(action)
+
+    def set_joint_torques(self, torques):
+        for joint_id, torque in zip(self.arm_controllable_joints, torques):
+            p.setJointMotorControl2(self.id, joint_id, p.TORQUE_CONTROL, force=torque)
+
+    def calculate_joint_torques(self, joint_poses):
+        kp, kd = 0.5, 0.05  # Proportional and derivative gains
+        torques = []
+        for joint_id, target_angle in zip(self.arm_controllable_joints, joint_poses):
+            current_position, current_velocity, _, _ = p.getJointState(self.id, joint_id)
+            torque = kp * (target_angle - current_position) - kd * current_velocity
+            torques.append(torque)
+        return torques
 
 
 class Panda(RobotBase):
@@ -162,8 +193,8 @@ class Panda(RobotBase):
     def move_gripper(self, open_length):
         assert self.gripper_range[0] <= open_length <= self.gripper_range[1]
         for i in [9, 10]:
-            p.setJointMotorControl2(self.id, i, p.POSITION_CONTROL, open_length, force=20)
-
+            # p.setJointMotorControl2(self.id, i, p.POSITION_CONTROL, open_length, force=20)
+            p.setJointMotorControl2(self.id, i, p.TORQUE_CONTROL, open_length, force=20)
 
 class UR5Robotiq85(RobotBase):
     def __init_robot__(self):
@@ -199,9 +230,26 @@ class UR5Robotiq85(RobotBase):
         Parameters:
         joint_angles (list): A list of joint angles corresponding to controllable joints.
         """
-        for joint_id, angle in zip(self.arm_controllable_joints, joint_angles):
-            p.setJointMotorControl2(self.id, joint_id, p.POSITION_CONTROL, targetPosition=angle,
-                                    force=self.joints[joint_id].maxForce, maxVelocity=self.joints[joint_id].maxVelocity)
+        # for joint_id, angle in zip(self.arm_controllable_joints, joint_angles):
+        #     # p.setJointMotorControl2(self.id, joint_id, p.POSITION_CONTROL, targetPosition=angle,
+        #     #                         force=self.joints[joint_id].maxForce, maxVelocity=self.joints[joint_id].maxVelocity)
+        #     p.setJointMotorControl2(self.id, joint_id, p.TORQUE_CONTROL, targetPosition=angle,
+        #                             force=self.joints[joint_id].maxForce, maxVelocity=self.joints[joint_id].maxVelocity)
+        kp, kd = 0.1, 0.01  # Tune these gains as needed
+
+        for joint_id, target_angle in zip(self.arm_controllable_joints, joint_angles):
+            current_position = p.getJointState(self.id, joint_id)[0]
+            current_velocity = p.getJointState(self.id, joint_id)[1]
+
+            # Calculate position error and velocity error
+            position_error = target_angle - current_position
+            velocity_error = 0 - current_velocity
+
+            # Calculate torque
+            torque = kp * position_error + kd * velocity_error
+
+            # Apply the calculated torque
+            p.setJointMotorControl2(self.id, joint_id, p.TORQUE_CONTROL, force=torque)
 
     def __setup_mimic_joints__(self, mimic_parent_name, mimic_children_names):
         self.mimic_parent_id = [joint.id for joint in self.joints if joint.name == mimic_parent_name][0]
@@ -216,12 +264,37 @@ class UR5Robotiq85(RobotBase):
                                    childFramePosition=[0, 0, 0])
             p.changeConstraint(c, gearRatio=-multiplier, maxForce=100, erp=1)  # Note: the mysterious `erp` is of EXTREME importance
 
+    # def move_gripper(self, open_length):
+    #     # open_length = np.clip(open_length, *self.gripper_range)
+    #     open_angle = 0.715 - math.asin((open_length - 0.010) / 0.1143)  # angle calculation
+    #     # Control the mimic gripper joint(s)
+    #     # p.setJointMotorControl2(self.id, self.mimic_parent_id, p.POSITION_CONTROL, targetPosition=open_angle,
+    #     #                         force=self.joints[self.mimic_parent_id].maxForce, maxVelocity=self.joints[self.mimic_parent_id].maxVelocity)
+    #     p.setJointMotorControl2(self.id, self.mimic_parent_id, p.TORQUE_CONTROL, targetPosition=open_angle,
+    #                             force=self.joints[self.mimic_parent_id].maxForce, maxVelocity=self.joints[self.mimic_parent_id].maxVelocity)
+
     def move_gripper(self, open_length):
-        # open_length = np.clip(open_length, *self.gripper_range)
+        assert self.gripper_range[0] <= open_length <= self.gripper_range[1]
+    
+        # Calculate the open angle based on the desired length
         open_angle = 0.715 - math.asin((open_length - 0.010) / 0.1143)  # angle calculation
-        # Control the mimic gripper joint(s)
-        p.setJointMotorControl2(self.id, self.mimic_parent_id, p.POSITION_CONTROL, targetPosition=open_angle,
-                                force=self.joints[self.mimic_parent_id].maxForce, maxVelocity=self.joints[self.mimic_parent_id].maxVelocity)
+    
+        # Get the current state of the mimic joint
+        current_position = p.getJointState(self.id, self.mimic_parent_id)[0]
+        current_velocity = p.getJointState(self.id, self.mimic_parent_id)[1]
+
+        # Define your control gains (you may want to tune these)
+        kp, kd = 0.1, 0.01
+
+        # Calculate position error and velocity error
+        position_error = open_angle - current_position
+        velocity_error = 0 - current_velocity
+
+        # Calculate the required torque
+        torque = kp * position_error + kd * velocity_error
+
+        # Apply the calculated torque to the mimic joint
+        p.setJointMotorControl2(self.id, self.mimic_parent_id, p.TORQUE_CONTROL, force=torque)
 
 
 class UR5Robotiq140(UR5Robotiq85):

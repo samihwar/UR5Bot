@@ -140,8 +140,6 @@ class ClutteredPushGrasp:
     def close(self):
         p.disconnect(self.physicsClient)
         
-    # i wanna try to add a ball and make UR5 pick it up
-
     def load_ball(self, position): # creating the ball itself at a position
         visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.04, rgbaColor=[1, 0, 0, 1])# the size was 0.05
         collision_shape_id = p.createCollisionShape(shapeType=p.GEOM_SPHERE, radius=0.04)# the size was 0.05
@@ -150,6 +148,7 @@ class ClutteredPushGrasp:
     
     def move_to_position(self, target_position, control_method='end', steps=120):
         self.robot.move_ee(target_position, control_method)
+        # self.robot.move_ee_with_torque(target_position, control_method)
         for _ in range(steps):
             p.stepSimulation()
             time.sleep(1 / 240.)
