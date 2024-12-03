@@ -67,6 +67,40 @@ def pick_and_lift():
 
     keep_it_running(robot,env)
 
+def general_control():
+    ycb_models = YCBModels(os.path.join('./data/ycb', '**', 'textured-decmp.obj'))
+    camera = Camera((1, 1, 1),
+                    (0, 0, 0),
+                    (0, 0, 1),
+                    0.1, 5, (320, 320), 40)
+    camera = None
+    robot = UR5Robotiq85((0, 0.5, 0), (0, 0, 0))
+    env = ClutteredPushGrasp(robot, ycb_models, camera, vis=True)
+
+    env.reset()
+    #   testing move_ee
+    
+    # starting_joints = {'shoulder_pan_joint': -1.5692913357931622, 'shoulder_lift_joint': -1.5464002711113891,'elbow_joint': 1.3698032438338124,
+    #                    'wrist_1_joint': -1.3905061274634392, 'wrist_2_joint': -1.5702364399647457, 'wrist_3_joint': 0.0007070970677205323,'finger_joint': -2.861393527469414e-07,
+    #                    'left_inner_finger_joint': 9.464288054072034e-08, 'left_inner_knuckle_joint': -7.804802604672394e-07,
+    #                    'right_outer_knuckle_joint': -5.85044992752054e-07, 'right_inner_finger_joint': 8.099090238868875e-07,
+    #                    'right_inner_knuckle_joint': 0.4378499984741211, 'gripper_opening_length': 0.03999999910593033}
+    # robot.move_ee(starting_joints, 'joint')
+
+    # statring =[0.1, 0.1, 0.3,0,0,0]
+    # env.robot.move_ee(statring, 'end')
+    # env.get_the_ball(statring)
+
+    print("General_control... Press Ctrl+C to stop.")
+    try:
+        while True:
+            obs = env.step(env.read_slider_values(),'joint')
+            # robot.debug_joint_positions()
+    except KeyboardInterrupt:
+        print("Exiting general_control...")
+        print(obs)
+        env.close()
+
 def throw_it():
     ycb_models = YCBModels(os.path.join('./data/ycb', '**', 'textured-decmp.obj'))
     camera = Camera((0.2, 0.2, 0.1),
@@ -79,9 +113,10 @@ def throw_it():
 
 
     # Apply torque to a single joint
-    single_joint_torques = [5.0] + [0.0] * (robot.arm_num_dofs - 1)
+    single_joint_torques = [242.0] + [0.0] * (robot.arm_num_dofs - 1) #8000
+    # robot.move_ee_with_torque(single_joint_torques, control_method="joint") 
 
-    for _ in range(100):
+    while True:
         robot.move_ee_with_torque(single_joint_torques, control_method="joint") 
         p.stepSimulation()
         time.sleep(1.0 / 240)
@@ -104,4 +139,5 @@ def throw_it():
 if __name__ == '__main__':
     # user_control_demo()
     # pick_and_lift()
-    throw_it()
+    # throw_it()
+    general_control()
