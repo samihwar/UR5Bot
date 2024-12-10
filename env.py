@@ -57,14 +57,13 @@ class ClutteredPushGrasp:
 
         # starting joint positions
         starting_joints = {
-            'shoulder_pan_joint': -1.5692913357931622, 
-            'shoulder_lift_joint': -1.5464002711113891, 
-            'elbow_joint': 1.3698032438338124,
-            'wrist_1_joint': -1.3905061274634392, 
-            'wrist_2_joint': -1.5702364399647457, 
-            'wrist_3_joint': 0.0007070970677205323,
-            'finger_joint': -2.861393527469414e-07
-            #,'gripper_opening_length': 0.03999999910593033
+            'shoulder_pan_joint': 0,
+            'shoulder_lift_joint': 0,
+            'elbow_joint': 0,
+            'wrist_1_joint': 0, 
+            'wrist_2_joint': 0, 
+            'wrist_3_joint': 0,
+            'finger_joint': 0
         }
 
         for joint in self.robot.joints:
@@ -72,12 +71,6 @@ class ClutteredPushGrasp:
                 initial_value = starting_joints[joint.name]
                 slider = p.addUserDebugParameter(joint.name, joint.lowerLimit, joint.upperLimit, initial_value)
                 sliders[joint.name] = slider
-
-        # # add the gripper opening
-        # if "gripper_opening_length" in starting_joints:
-        #     initial_gripper_length = starting_joints["gripper_opening_length"]
-        #     slider = p.addUserDebugParameter("gripper_opening_length", 0, 0.085, initial_gripper_length)
-        #     sliders["gripper_opening_length"] = slider
 
         return sliders
 
@@ -121,10 +114,7 @@ class ClutteredPushGrasp:
         assert control_method in ('joint', 'end')
 
         self.robot.move_ee(action, control_method)
-        # self.robot.move_gripper(action['gripper_opening_length'])
-
-        for _ in range(120):  # Wait for a few steps
-            self.step_simulation()
+        self.step_simulation()
 
         return self.get_observation()
 

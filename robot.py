@@ -126,8 +126,7 @@ class RobotBase(object):
             joint_poses = p.calculateInverseKinematics(self.id, self.eef_id, pos, orn,self.arm_lower_limits, self.arm_upper_limits
                                                        , self.arm_joint_ranges, self.arm_rest_poses,maxNumIterations=20)
             for i, joint_id in enumerate(self.arm_controllable_joints):
-                p.setJointMotorControl2(self.id, joint_id, p.VELOCITY_CONTROL, joint_poses[i],#POSITION_CONTROL
-                                        force=self.joints[joint_id].maxForce, maxVelocity=self.joints[joint_id].maxVelocity)
+                p.setJointMotorControl2(self.id, joint_id, p.VELOCITY_CONTROL, targetVelocity = joint_poses[i])
         elif control_method == 'joint': 
             # print(f'\n\n {action.items()} \n\n')    #for debugging
             for joint_name, joint_position in action.items():
@@ -136,8 +135,10 @@ class RobotBase(object):
                 joint = next((j for j in self.joints if j.name == joint_name), None)
                 if joint is None:
                     raise ValueError(f"Joint '{joint_name}' not found!")
-                p.setJointMotorControl2(self.id, joint.id, p.POSITION_CONTROL, joint_position,
-                                        force=joint.maxForce, maxVelocity=joint.maxVelocity)
+                # p.setJointMotorControl2(self.id, joint.id, p.VELOCITY_CONTROL, targetVelocity = joint_position)
+                p.setJointMotorControl2(bodyIndex = self.id, jointIndex = joint.id, controlMode = p.POSITION_CONTROL, force = 0)
+                p.setJointMotorControl2(bodyIndex = self.id, jointIndex = joint.id, controlMode = p.VELOCITY_CONTROL, force = 0)
+                p.setJointMotorControl2(bodyIndex = self.id, jointIndex = joint.id, controlMode = p.TORQUE_CONTROL, force = 100*joint_position)
 
     def move_gripper(self, open_length):
         raise NotImplementedError
@@ -232,7 +233,7 @@ class UR5Robotiq85(RobotBase):
                                 'right_inner_knuckle_joint': 1,
                                 'left_inner_finger_joint': -1,
                                 'right_inner_finger_joint': -1}
-        self.__setup_mimic_joints__(mimic_parent_name, mimic_children_names)
+        #self.__setup_mimic_joints__(mimic_parent_name, mimic_children_names)
 
     def set_joint_positions(self, joint_angles):
         """
@@ -281,8 +282,8 @@ class UR5Robotiq85(RobotBase):
         # Control the mimic gripper joint(s)
         # p.setJointMotorControl2(self.id, self.mimic_parent_id, p.POSITION_CONTROL, targetPosition=open_angle,
         #                         force=self.joints[self.mimic_parent_id].maxForce, maxVelocity=self.joints[self.mimic_parent_id].maxVelocity)
-        p.setJointMotorControl2(self.id, self.mimic_parent_id, p.TORQUE_CONTROL, targetPosition=open_angle,
-                                force=self.joints[self.mimic_parent_id].maxForce, maxVelocity=self.joints[self.mimic_parent_id].maxVelocity)
+        #p.setJointMotorControl2(self.id, self.mimic_parent_id, p.TORQUE_CONTROL, targetPosition=open_angle,
+        #                        force=self.joints[self.mimic_parent_id].maxForce, maxVelocity=self.joints[self.mimic_parent_id].maxVelocity)
 
     # def move_gripper_with_torque(self, open_length):
     #     assert self.gripper_range[0] <= open_length <= self.gripper_range[1]
