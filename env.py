@@ -63,8 +63,8 @@ class ClutteredPushGrasp:
             'wrist_1_joint': -1.3905061274634392, 
             'wrist_2_joint': -1.5702364399647457, 
             'wrist_3_joint': 0.0007070970677205323,
-            'finger_joint': -2.861393527469414e-07,
-            'gripper_opening_length': 0.03999999910593033
+            'finger_joint': -2.861393527469414e-07
+            #,'gripper_opening_length': 0.03999999910593033
         }
 
         for joint in self.robot.joints:
@@ -73,11 +73,11 @@ class ClutteredPushGrasp:
                 slider = p.addUserDebugParameter(joint.name, joint.lowerLimit, joint.upperLimit, initial_value)
                 sliders[joint.name] = slider
 
-        # add the gripper opening
-        if "gripper_opening_length" in starting_joints:
-            initial_gripper_length = starting_joints["gripper_opening_length"]
-            slider = p.addUserDebugParameter("gripper_opening_length", 0, 0.085, initial_gripper_length)
-            sliders["gripper_opening_length"] = slider
+        # # add the gripper opening
+        # if "gripper_opening_length" in starting_joints:
+        #     initial_gripper_length = starting_joints["gripper_opening_length"]
+        #     slider = p.addUserDebugParameter("gripper_opening_length", 0, 0.085, initial_gripper_length)
+        #     sliders["gripper_opening_length"] = slider
 
         return sliders
 
@@ -121,7 +121,7 @@ class ClutteredPushGrasp:
         assert control_method in ('joint', 'end')
 
         self.robot.move_ee(action, control_method)
-        self.robot.move_gripper(action['gripper_opening_length'])
+        # self.robot.move_gripper(action['gripper_opening_length'])
 
         for _ in range(120):  # Wait for a few steps
             self.step_simulation()
@@ -145,19 +145,18 @@ class ClutteredPushGrasp:
 
     def close(self):
         p.disconnect(self.physicsClient)
+
+    def move_to_position(self, target_position, control_method='end', steps=120):
+        self.robot.move_ee(target_position, control_method)
+        for _ in range(steps):
+            p.stepSimulation()
+            time.sleep(1 / 240.)
         
     def load_ball(self, position): # creating the ball itself at a position
         visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.04, rgbaColor=[1, 0, 0, 1])# the size was 0.05
         collision_shape_id = p.createCollisionShape(shapeType=p.GEOM_SPHERE, radius=0.04)# the size was 0.05
         ball_id = p.createMultiBody(baseMass=1,baseCollisionShapeIndex=collision_shape_id,baseVisualShapeIndex=visual_shape_id,basePosition=position)
         return ball_id
-    
-    def move_to_position(self, target_position, control_method='end', steps=120):
-        self.robot.move_ee(target_position, control_method)
-        # self.robot.move_ee_with_torque(target_position, control_method)
-        for _ in range(steps):
-            p.stepSimulation()
-            time.sleep(1 / 240.)
 
     def hug_ball(self, ball_position):
         pitch=math.pi / 2   # look down
@@ -210,43 +209,6 @@ class ClutteredPushGrasp:
     #     self.move_to_position(target_pos)
     #     time.sleep(release_time)
     #     self.let_go_ball()
-
-    def move_joint_2(self, target_angle):
-        # get joint positions
-        joint_obs = self.robot.get_joint_obs()
-        current_joint_positions = joint_obs['positions']
-        modified_joint_positions = current_joint_positions.copy()
-
-        modified_joint_positions[2] = target_angle
-
-        self.robot.set_joint_positions(modified_joint_positions)
-
-
-    def throw_ball(self, direction, speed=1.0, release_time=0.5):
-        start_position = [0.3, 0.5, 0.3, 0, 0, 0]
-        self.move_to_position(start_position)
-    
-        # Move only Joint 2
-        new_joint_2_angle = -0.1
-        self.move_joint_2(new_joint_2_angle)
-        
-        # Monitor the end-effector�s position
-        current_pos = self.robot.get_joint_obs()['ee_pos']
-    
-        # Define the point where you'd like to release the ball (example: when z-height reaches 0.5)
-        target_z_height = 0.5
-    
-        while current_pos[2] < target_z_height:  # Z-axis condition
-            current_pos = self.robot.get_joint_obs()['ee_pos']
-            print(f"Current EE Position: {current_pos}")
-            p.stepSimulation()
-            time.sleep(1 / 240.)
-    
-        self.let_go_ball()  # Release the ball when the condition is met
-
-        # time.sleep(release_time)
-        # self.let_go_ball()
-
 
     # def throw_ball(self, direction, speed=1.0, release_time=0.5):
     #     joint_obs = self.robot.get_joint_obs()
