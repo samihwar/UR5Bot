@@ -38,28 +38,50 @@ class ClutteredPushGrasp:
         self.robot.step_simulation = self.step_simulation
 
         # custom sliders to tune parameters (name of the parameter,range,initial value)
-        self.xin = p.addUserDebugParameter("x", -0.224, 0.224, 0)
-        self.yin = p.addUserDebugParameter("y", -0.224, 0.224, 0)
-        self.zin = p.addUserDebugParameter("z", 0, 1., 0.5)
-        self.rollId = p.addUserDebugParameter("roll", -3.14, 3.14, 0)
-        self.pitchId = p.addUserDebugParameter("pitch", -3.14, 3.14, np.pi/2)
-        self.yawId = p.addUserDebugParameter("yaw", -np.pi/2, np.pi/2, np.pi/2)
-        self.gripper_opening_length_control = p.addUserDebugParameter("gripper_opening_length", 0, 0.085, 0.04)
+        # self.xin = p.addUserDebugParameter("x", -0.224, 0.224, 0)
+        # self.yin = p.addUserDebugParameter("y", -0.224, 0.224, 0)
+        # self.zin = p.addUserDebugParameter("z", 0, 1., 0.5)
+        # self.rollId = p.addUserDebugParameter("roll", -3.14, 3.14, 0)
+        # self.pitchId = p.addUserDebugParameter("pitch", -3.14, 3.14, np.pi/2)
+        # self.yawId = p.addUserDebugParameter("yaw", -np.pi/2, np.pi/2, np.pi/2)
+        # self.gripper_opening_length_control = p.addUserDebugParameter("gripper_opening_length", 0, 0.085, 0.04)
+
+        self.sliders = {}
+        self.sliders = self.create_joint_sliders()
 
         joint_obs = self.robot.get_joint_obs()
         print(joint_obs.keys())
 
-        # self.boxID = p.loadURDF("./urdf/skew-box-button.urdf",
-        #                         [0.0, 0.0, 0.0],
-        #                         # p.getQuaternionFromEuler([0, 1.5706453, 0]),
-        #                         p.getQuaternionFromEuler([0, 0, 0]),
-        #                         useFixedBase=True,
-        #                         flags=p.URDF_MERGE_FIXED_LINKS | p.URDF_USE_SELF_COLLISION)
+    def create_joint_sliders(self):
+        sliders = {}
 
-        # # For calculating the reward
-        # self.box_opened = False
-        # self.btn_pressed = False
-        # self.box_closed = False
+        # starting joint positions
+        starting_joints = {
+            'shoulder_pan_joint': 0,
+            'shoulder_lift_joint': 0,
+            'elbow_joint': 0,
+            'wrist_1_joint': 0, 
+            'wrist_2_joint': 0, 
+            'wrist_3_joint': 0,
+            'finger_joint': 0
+        }
+
+        for joint in self.robot.joints:
+            if joint.controllable and joint.name in starting_joints:  # Check if the joint has a starting value
+                initial_value = starting_joints[joint.name]
+                slider = p.addUserDebugParameter(joint.name, joint.lowerLimit, joint.upperLimit, initial_value)
+                sliders[joint.name] = slider
+
+        return sliders
+
+    def read_slider_values(self):
+        if self.sliders is None:
+            raise ValueError("Sliders are not initialized. Call 'create_joint_sliders' first.")
+    
+        joint_values = {}
+        for joint_name, slider_id in self.sliders.items():
+            joint_values[joint_name] = p.readUserDebugParameter(slider_id)
+        return joint_values # here we have the name with the value
 
     def step_simulation(self):
         """
@@ -70,52 +92,31 @@ class ClutteredPushGrasp:
             time.sleep(self.SIMULATION_STEP_DELAY)
             self.p_bar.update(1)
 
-    def read_debug_parameter(self):
-        # read the value of task parameter
-        x = p.readUserDebugParameter(self.xin)
-        y = p.readUserDebugParameter(self.yin)
-        z = p.readUserDebugParameter(self.zin)
-        roll = p.readUserDebugParameter(self.rollId)
-        pitch = p.readUserDebugParameter(self.pitchId)
-        yaw = p.readUserDebugParameter(self.yawId)
-        gripper_opening_length = p.readUserDebugParameter(self.gripper_opening_length_control)
+    # def read_debug_parameter(self):
+    #     # read the value of task parameter
+    #     x = p.readUserDebugParameter(self.xin)
+    #     y = p.readUserDebugParameter(self.yin)
+    #     z = p.readUserDebugParameter(self.zin)
+    #     roll = p.readUserDebugParameter(self.rollId)
+    #     pitch = p.readUserDebugParameter(self.pitchId)
+    #     yaw = p.readUserDebugParameter(self.yawId)
+    #     gripper_opening_length = p.readUserDebugParameter(self.gripper_opening_length_control)
 
-        return x, y, z, roll, pitch, yaw, gripper_opening_length
+    #     return x, y, z, roll, pitch, yaw, gripper_opening_length
 
-    # def step(self, action, control_method='joint'):
-    #     """
-    #     action: (x, y, z, roll, pitch, yaw, gripper_opening_length) for End Effector Position Control
-    #             (a1, a2, a3, a4, a5, a6, a7, gripper_opening_length) for Joint Position Control
-    #     control_method:  'end' for end effector position control
-    #                      'joint' for joint position control
-    #     """
-    #     assert control_method in ('joint', 'end')
-    #     self.robot.move_ee(action[:-1], control_method)
-    #     self.robot.move_gripper(action[-1])
-    #     for _ in range(120):  # Wait for a few steps
-    #         self.step_simulation()
+    def step(self, action, control_method='joint'):
+        """
+        action: (x, y, z, roll, pitch, yaw, gripper_opening_length) for End Effector Position Control
+                {'joint_name':number,'joint_name':number, gripper_opening_length} for Joint Position Control
+        control_method:  'end' for end effector position control
+                         'joint' for joint position control
+        """
+        assert control_method in ('joint', 'end')
 
-    #     reward = self.update_reward()
-    #     done = True if reward == 1 else False
-    #     info = dict(box_opened=self.box_opened, btn_pressed=self.btn_pressed, box_closed=self.box_closed)
-    #     return self.get_observation(), reward, done, info
+        self.robot.move_ee(action, control_method)
+        self.step_simulation()
 
-    # def update_reward(self):
-    #     reward = 0
-    #     if not self.box_opened:
-    #         if p.getJointState(self.boxID, 1)[0] > 1.9:
-    #             self.box_opened = True
-    #             print('Box opened!')
-    #     elif not self.btn_pressed:
-    #         if p.getJointState(self.boxID, 0)[0] < - 0.02:
-    #             self.btn_pressed = True
-    #             print('Btn pressed!')
-    #     else:
-    #         if p.getJointState(self.boxID, 1)[0] < 0.1:
-    #             print('Box closed!')
-    #             self.box_closed = True
-    #             reward = 1
-    #     return reward
+        return self.get_observation()
 
     def get_observation(self):
         obs = dict()
@@ -128,31 +129,24 @@ class ClutteredPushGrasp:
 
         return obs
 
-    # def reset_box(self):
-    #     p.setJointMotorControl2(self.boxID, 0, p.POSITION_CONTROL, force=1)
-    #     p.setJointMotorControl2(self.boxID, 1, p.VELOCITY_CONTROL, force=0)
-
     def reset(self):
         self.robot.reset()
-        # self.reset_box()
         return self.get_observation()
 
     def close(self):
         p.disconnect(self.physicsClient)
-        
-    # i wanna try to add a ball and make UR5 pick it up
 
-    def load_ball(self, position): # creating the ball itself at a position
-        visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.04, rgbaColor=[1, 0, 0, 1])# the size was 0.05
-        collision_shape_id = p.createCollisionShape(shapeType=p.GEOM_SPHERE, radius=0.04)# the size was 0.05
-        ball_id = p.createMultiBody(baseMass=1,baseCollisionShapeIndex=collision_shape_id,baseVisualShapeIndex=visual_shape_id,basePosition=position)
-        return ball_id
-    
     def move_to_position(self, target_position, control_method='end', steps=120):
         self.robot.move_ee(target_position, control_method)
         for _ in range(steps):
             p.stepSimulation()
             time.sleep(1 / 240.)
+        
+    def load_ball(self, position): # creating the ball itself at a position
+        visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.04, rgbaColor=[1, 0, 0, 1])# the size was 0.05
+        collision_shape_id = p.createCollisionShape(shapeType=p.GEOM_SPHERE, radius=0.04)# the size was 0.05
+        ball_id = p.createMultiBody(baseMass=1,baseCollisionShapeIndex=collision_shape_id,baseVisualShapeIndex=visual_shape_id,basePosition=position)
+        return ball_id
 
     def hug_ball(self, ball_position):
         pitch=math.pi / 2   # look down
@@ -205,43 +199,6 @@ class ClutteredPushGrasp:
     #     self.move_to_position(target_pos)
     #     time.sleep(release_time)
     #     self.let_go_ball()
-
-    def move_joint_2(self, target_angle):
-        # get joint positions
-        joint_obs = self.robot.get_joint_obs()
-        current_joint_positions = joint_obs['positions']
-        modified_joint_positions = current_joint_positions.copy()
-
-        modified_joint_positions[2] = target_angle
-
-        self.robot.set_joint_positions(modified_joint_positions)
-
-
-    def throw_ball(self, direction, speed=1.0, release_time=0.5):
-        start_position = [0.3, 0.5, 0.3, 0, 0, 0]
-        self.move_to_position(start_position)
-    
-        # Move only Joint 2
-        new_joint_2_angle = -0.1
-        self.move_joint_2(new_joint_2_angle)
-        
-        # Monitor the end-effector�s position
-        current_pos = self.robot.get_joint_obs()['ee_pos']
-    
-        # Define the point where you'd like to release the ball (example: when z-height reaches 0.5)
-        target_z_height = 0.5
-    
-        while current_pos[2] < target_z_height:  # Z-axis condition
-            current_pos = self.robot.get_joint_obs()['ee_pos']
-            print(f"Current EE Position: {current_pos}")
-            p.stepSimulation()
-            time.sleep(1 / 240.)
-    
-        self.let_go_ball()  # Release the ball when the condition is met
-
-        # time.sleep(release_time)
-        # self.let_go_ball()
-
 
     # def throw_ball(self, direction, speed=1.0, release_time=0.5):
     #     joint_obs = self.robot.get_joint_obs()
