@@ -81,7 +81,7 @@ class ClutteredPushGrasp:
         joint_values = {}
         for joint_name, slider_id in self.sliders.items():
             joint_values[joint_name] = p.readUserDebugParameter(slider_id)
-        print (f'\n\n{joint_values}\n\n')
+        # print (f'\n\n{joint_values}\n\n') for debugging
         return joint_values # here we have the name with the value
 
     def step_simulation(self):
@@ -186,7 +186,6 @@ class ClutteredPushGrasp:
         pitch=math.pi / 2
         action = [current_pos[0], current_pos[1], current_pos[2] + lift_height, 0, pitch, 0]  # Lift the ball by lift_height units
         self.move_to_position(action)
-        time.sleep(1)
         ee_pos = self.robot.get_joint_obs()['ee_pos']
         print(f"end-effector actual position: {ee_pos}")
 

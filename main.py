@@ -97,40 +97,74 @@ def throw_it():
     env = ClutteredPushGrasp(robot, ycb_models, camera=camera, vis=True)
     env.reset()
 
-    # Apply torque to a single joint
-    moving_joints = {'shoulder_pan_joint': 0.0,
-                   'shoulder_lift_joint': 0.0,
-                  'elbow_joint': 0.0,
-                 'wrist_1_joint': 0.0,
-                'wrist_2_joint': 0.0,
-               'wrist_3_joint': 0.0,
-              'finger_joint': 0.0}
-    robot.move_joints_end(moving_joints, control_method="joint") 
+    # # Get current position of the end-effector
+    # ee_pos = robot.get_joint_obs()['ee_pos']
+
+    # # pitch = math.pi / 2  # Pointing downward
+    # # env.move_to_position([ee_pos[0], ee_pos[1], ee_pos[2], 0, pitch, 0])
+
+    # # Adjust the ball position
+    # ball_position = [ee_pos[0], ee_pos[1], ee_pos[2]]  
+    # ball_id = env.load_ball(ball_position)
+
+    # Grasp and lift the ball
+    # env.grasp_ball()
+
+    sleep_time = 1
+    while True:
+        robot.close_gripper()
+        for _ in range(int(sleep_time / 0.01)):
+            p.stepSimulation()
+            time.sleep(0.01)
+        robot.open_gripper()
+        for _ in range(int(sleep_time / 0.01)):
+            p.stepSimulation()
+            time.sleep(0.01)
+
+    # print("\nclosing gripper\n")
     # while True:
-    #     robot.move_joints_end(moving_joints, control_method="joint") 
+    #     robot.close_gripper()
     #     p.stepSimulation()
-    #     time.sleep(1.0 / 240)
-
-    # pitch = math.pi / 2 
-    # action = [0.1, 0.6, 0.3, 0, pitch, 0]  # x, y, z 
-    # env.move_to_position(action)
-    time.sleep(2)
-
-    ee_pos = robot.get_joint_obs()['ee_pos']
-    ball_position = [ee_pos[0], ee_pos[1], ee_pos[2]-0.08]
-    ball_id = env.load_ball(ball_position)
-    env.grasp_ball()
-    moving_joints = {'shoulder_pan_joint': 0.0,
-                'shoulder_lift_joint': 0.0,
-                'elbow_joint': 0.0,
-                'wrist_1_joint': 0.2,
-            'wrist_2_joint': 0.0,
-            'wrist_3_joint': 0.0,
-            'finger_joint': 0.0}
-    robot.move_joints_end(moving_joints, control_method="joint") 
-    
+    #     time.sleep(2)
+    # robot.open_gripper()
+    # p.stepSimulation()
+    # time.sleep(2)
     # env.lift_ball()
-    # # here we have ready grasped ball
+
+    # # Apply torque to a single joint
+    # moving_joints = {'shoulder_pan_joint': 0.0,
+    #                'shoulder_lift_joint': 0.0,
+    #               'elbow_joint': 0.0,
+    #              'wrist_1_joint': 0.0,
+    #             'wrist_2_joint': 0.0,
+    #            'wrist_3_joint': 0.0,
+    #           'finger_joint': 0.0}
+    # robot.move_joints_end(moving_joints, control_method="joint") 
+    # # while True:
+    # #     robot.move_joints_end(moving_joints, control_method="joint") 
+    # #     p.stepSimulation()
+    # #     time.sleep(1.0 / 240)
+
+    # # pitch = math.pi / 2 
+    # # action = [0.1, 0.6, 0.3, 0, pitch, 0]  # x, y, z 
+    # # env.move_to_position(action)
+    # time.sleep(2)
+
+    # ee_pos = robot.get_joint_obs()['ee_pos']
+    # ball_position = [ee_pos[0], ee_pos[1], ee_pos[2]-0.08]
+    # ball_id = env.load_ball(ball_position)
+    # env.grasp_ball()
+    # moving_joints = {'shoulder_pan_joint': 0.0,
+    #             'shoulder_lift_joint': 0.0,
+    #             'elbow_joint': 0.0,
+    #             'wrist_1_joint': 0.2,
+    #         'wrist_2_joint': 0.0,
+    #         'wrist_3_joint': 0.0,
+    #         'finger_joint': 0.0}
+    # robot.move_joints_end(moving_joints, control_method="joint") 
+    
+    # # env.lift_ball()
+    # # # here we have ready grasped ball
 
     keep_it_running(robot, env)
 
