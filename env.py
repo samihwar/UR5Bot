@@ -81,6 +81,7 @@ class ClutteredPushGrasp:
         joint_values = {}
         for joint_name, slider_id in self.sliders.items():
             joint_values[joint_name] = p.readUserDebugParameter(slider_id)
+        print (f'\n\n{joint_values}\n\n')
         return joint_values # here we have the name with the value
 
     def step_simulation(self):
@@ -113,7 +114,7 @@ class ClutteredPushGrasp:
         """
         assert control_method in ('joint', 'end')
 
-        self.robot.move_ee(action, control_method)
+        self.robot.move_joints_end(action, control_method)
         self.step_simulation()
 
         return self.get_observation()
@@ -137,7 +138,7 @@ class ClutteredPushGrasp:
         p.disconnect(self.physicsClient)
 
     def move_to_position(self, target_position, control_method='end', steps=120):
-        self.robot.move_ee(target_position, control_method)
+        self.robot.move_joints_end(target_position, control_method)
         for _ in range(steps):
             p.stepSimulation()
             time.sleep(1 / 240.)
