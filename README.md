@@ -65,6 +65,20 @@ starting_joints = {
 - Integration with external controllers.
 - Throwing a ball in a precise way.
 
+## References
+
+[https://github.com/ElectronicElephant/pybullet_ur5_robotiq.git](https://github.com/ElectronicElephant/pybullet_ur5_robotiq.git)
+
+[https://github.com/matafela/pybullet_grasp_annotator_robotiq_85](https://github.com/matafela/pybullet_grasp_annotator_robotiq_85)
+
+[https://github.com/zswang666/pybullet-playground](https://github.com/zswang666/pybullet-playground)
+
+[https://github.com/ros-industrial/robotiq](https://github.com/ros-industrial/robotiq)
+
+[https://github.com/Alchemist77/pybullet-ur5-equipped-with-robotiq-140](https://github.com/Alchemist77/pybullet-ur5-equipped-with-robotiq-140)
+
+I do not claim copyright for any model files under this repo.
+
 ## License
 This project is open-source and available under the MIT License.
 
