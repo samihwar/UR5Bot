@@ -17,8 +17,8 @@ This is a robotic simulation framework designed for precise robotic arm control 
 
 1. Clone the repository:
    ```sh
-   git clone https://github.com/samihwar/throwbot.git
-   cd throwbot
+   git clone https://github.com/samihwar/UR5Bot.git
+   cd UR5Bot
    ```
 
 ## Usage
@@ -77,6 +77,6 @@ This Project was done as a semester project for a BSc in Computer Science at the
 ## ☎ Contact
 
 - **Github Profile**: [https://github.com/samihwar](https://github.com/samihwar)
-- **📧 Email**: [samehwarwar@gmail.com](mailto:samehwarwar@gmail.com)
-- **LinkedIn**: [https://www.linkedin.com/in/samehwarwar](https://www.linkedin.com/in/samehwarwar)
+- **📧 Email**: [samih.warwar@gmail.com](mailto:samih.warwar@gmail.com)
+- **LinkedIn**: [https://www.linkedin.com/in/samih-warwar](https://www.linkedin.com/in/samih-warwar)
 
